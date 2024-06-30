@@ -137,7 +137,7 @@ router.post('/auth/updateuserinfo', multersingle, [
         if (business) { updateuserinfo.business = business }
         if (email) { updateuserinfo.email = email }
         if (address) { updateuserinfo.address = address }
-        if (userprofile) {
+        if (req.file) {
             updateuserinfo.userprofile = req.file
         }
         if (newsapi) {
