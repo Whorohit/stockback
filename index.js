@@ -46,7 +46,9 @@ userModels();
 loginAuth();
 userledger();
 Watchlist();
-app.get("/",(req, res) => res.send("Express on Vercel"))
+
+
+app.get("/",(req, res) => res.send("Express on  bro  Vercel"))
 
 // savenote();
 app.post('/auth/signup',routes)
