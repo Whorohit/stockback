@@ -48,7 +48,7 @@ const LoginSchema = mongoose.Schema({
         type:Number,
         max:6
     },
-    newapi:{
+    newsapi:{
     type:String,
 
     },

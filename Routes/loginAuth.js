@@ -6,9 +6,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fetchuser = require('../Middleware/Fetchuser')
 const nodemailer = require("nodemailer");
-const multer  = require('multer')
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const multer = require('multer')
+const multerupload = multer({
+    limits: {
+        fieldSize: 1024 * 1024 * 5
+    }
+})
+
+const multersingle = multerupload.single("userprofile")
 
 const tokenkey = "mynamrisrohit"
 
@@ -23,23 +28,23 @@ router.post('/auth/signup', [
     let success = false
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({success:false, errors: errors });
+        return res.status(400).json({ success: false, errors: errors });
     }
-    const { email, password,lastname,firstname } = req.body
+    const { email, password, lastname, firstname } = req.body
     try {
         let usr = await login.findOne({ email: req.body.email })
         if (usr) {
-            return res.status(400).json({ success:false, errors: "email id already Exists use differnent id" });
+            return res.status(400).json({ success: false, errors: "email id already Exists use differnent id" });
         }
         // const salt = await bcrypt.genSalt(10);
         // console.log();
         console.log(req.body);
         console.log(password);
-        const pass = await bcrypt.hash(password,10);
+        const pass = await bcrypt.hash(password, 10);
         console.log(pass);
         const user = await login.create({
             firstname: firstname,
-            lastname:lastname,
+            lastname: lastname,
             password: pass,
             email: email,
         })
@@ -53,12 +58,12 @@ router.post('/auth/signup', [
             expiresIn: '30m'
         });
         success = true
-        res.json({ success:true, token, id: user.id,firstname:user.firstname, })
+        res.json({ success: true, token, id: user.id, firstname: user.firstname, })
         console.log(user)
 
     }
     catch (error) {
-        res.status(200).send({success:false,errors:"techincal error bro"})
+        res.status(200).send({ success: false, errors: "techincal error bro" })
 
     }
 })
@@ -104,7 +109,7 @@ router.post('/auth/login', [
         }
     })
 
-router.post('/auth/updateuserinfo', [
+router.post('/auth/updateuserinfo', multersingle, [
     // body('firstname', 'title cannot be smaller than 2 characters').isLength({ min: 2 }),
     // body('lastname', 'enter the  correct amount').isLength({ min: 1 }),
     // body('dob', 'enter the vaild time!').isLength({ min: 5 }),
@@ -114,32 +119,38 @@ router.post('/auth/updateuserinfo', [
     // body('address', 'enter the vaild   address').isLength({ min: 5, max: 40 }),
     // body('email', 'enter the vaild   Email id').isEmail({ max: 40 }),
 
-], fetchuser, async (req, res,next) => {
+], fetchuser, async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty) {
-        return res.status(400).json({ errors: errors.array(),success:false });
+        return res.status(400).json({ errors: errors.array(), success: false });
     }
-    const { firstname, lastname, pincode, mobile, business, email, dob,address,userprofile } = req.body
+    const { firstname, lastname, pincode, mobile, business, email, dob, address, userprofile, newsapi, stockapi } = req.body
     try {
         const userid = req.user;
         let updateuserinfo = {}
-        
-      if (firstname) { updateuserinfo.firstname = firstname }
-      if (dob) { updateuserinfo.dob =dob }
-      if (lastname) { updateuserinfo.lastname = lastname }
-      if (pincode) { updateuserinfo.pincode = pincode }
-      if (mobile) { updateuserinfo.mobile =mobile }
-      if (business) { updateuserinfo.business =business }
-      if (email) { updateuserinfo.email = email }
-      if (address) { updateuserinfo.address = address }
-      if(userprofile){
-        updateuserinfo.userprofile =userprofile 
-      }
+
+        if (firstname) { updateuserinfo.firstname = firstname }
+        if (dob) { updateuserinfo.dob = dob }
+        if (lastname) { updateuserinfo.lastname = lastname }
+        if (pincode) { updateuserinfo.pincode = pincode }
+        if (mobile) { updateuserinfo.mobile = mobile }
+        if (business) { updateuserinfo.business = business }
+        if (email) { updateuserinfo.email = email }
+        if (address) { updateuserinfo.address = address }
+        if (userprofile) {
+            updateuserinfo.userprofile = req.file
+        }
+        if (newsapi) {
+            updateuserinfo.newsapi = newsapi
+        }
+        if (stockapi) {
+            updateuserinfo.stockapi = stockapi
+        }
         const user = await login.findByIdAndUpdate(req.user, { $set: updateuserinfo }, { new: true })
-       
-        
+
+
         console.log("helllll");
-        res.json({message:"Changed info successfully",success:true})
+        res.json({ message: "Changed info successfully", success: true })
     } catch (error) {
         next(error)
     }
@@ -147,7 +158,7 @@ router.post('/auth/updateuserinfo', [
 router.post('/auth/pass', fetchuser, async (req, res) => {
     let success = false
     if (!req.body.password)
-        return res.status(400).json({ success:false, errors: "enter with correct user name and  password" });
+        return res.status(400).json({ success: false, errors: "enter with correct user name and  password" });
 
     try {
 
@@ -170,7 +181,7 @@ router.post('/auth/email',
         const errors = validationResult(req);
         let success = false
         if (!errors.isEmpty) {
-            return res.status(400).json({ errors: errors.array(),success:false });
+            return res.status(400).json({ errors: errors.array(), success: false });
         }
         const { email } = req.body
         try {
@@ -207,24 +218,24 @@ router.post('/auth/email',
             res.status(500).send("Internal Server Error");
         }
     })
-    router.get('/auth/getuser',fetchuser
-        ,async (req, res) => {
-            try {
-                let user = await login.findById(req.user).select("-password")
-                if (!user) {
-                    return res.status(400).json({ success, errors: "Email doesn't Exists " });
-    
-                }
-                success = true
-                res.status(200).json({ success,  user:user })
+router.get('/auth/getuser', fetchuser
+    , async (req, res) => {
+        try {
+            let user = await login.findById(req.user).select("-password")
+            if (!user) {
+                return res.status(400).json({ success, errors: "Email doesn't Exists " });
 
-    
-    
-            } catch (error) {
-                console.error(error.message);
-                res.status(200).send({success:false ,message: "Internal Server Error"});
             }
-        })
+            success = true
+            res.status(200).json({ success, user: user })
+
+
+
+        } catch (error) {
+            console.error(error.message);
+            res.status(200).send({ success: false, message: "Internal Server Error" });
+        }
+    })
 
 
 
