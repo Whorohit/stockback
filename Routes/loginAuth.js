@@ -146,8 +146,9 @@ router.post('/auth/updateuserinfo', multersingle, [
         if (stockapi) {
             updateuserinfo.stockapi = stockapi
         }
+         console.log(req.file);
         const user = await login.findByIdAndUpdate(req.user, { $set: updateuserinfo }, { new: true })
-
+        
 
         console.log("helllll");
         res.json({ message: "Changed info successfully", success: true })
